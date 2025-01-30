@@ -1,0 +1,49 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          sudo apt update && sudo apt install -y \
+          python3-pip python3-setuptools \
+          python3-venv zip unzip openjdk-17-jdk
+
+          pip install --upgrade pip
+          pip install cython buildozer
+
+      - name: Install Android SDK & NDK
+        run: |
+          sudo apt install -y android-sdk android-sdk-platform-tools android-sdk-platform-23
+          wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+          unzip android-ndk-r25c-linux.zip
+          mv android-ndk-r25c $HOME/android-ndk
+
+      - name: Build APK
+        run: |
+          buildozer init  # Generates buildozer.spec file if not already present
+          buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: built-apk
+          path: bin/*.apk￼Enter
